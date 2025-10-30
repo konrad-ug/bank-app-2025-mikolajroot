@@ -13,7 +13,7 @@ class Account:
         if 0 < money <= self.balance:
             self.balance -= money
 
-
+#personal
 class PersonalAccount(Account):
     def __init__(self, first_name, last_name,pesel,promoCode=None):
         self.first_name = first_name
@@ -37,7 +37,7 @@ class PersonalAccount(Account):
         if 0 < money <= self.balance + 1.0:
             self.balance -= money + 1.0
 
-
+#company
 class CompanyAccount(Account):
     def __init__(self, company_name,nip):
         self.company_name = company_name

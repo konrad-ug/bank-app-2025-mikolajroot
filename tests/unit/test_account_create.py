@@ -1,3 +1,5 @@
+from threading import active_count
+
 from src.personalaccount import PersonalAccount, Account
 from src.personalaccount import CompanyAccount
 
@@ -160,6 +162,25 @@ class TestCompanyAccount:
         assert account.balance == 50.0
 
     def test_check_balance(self):
-        account = Account(0.0)
+        account = Account()
 
         assert account.balance == 0.0
+        assert account.history == []
+
+    def check_history_transfer_out(self):
+        account = CompanyAccount('nazwa_firmy', '1343213465')
+
+        account.balance = 50.0
+
+        account.transfer_out(30)
+
+        assert account.history == [-30]
+
+    def check_express_transfer_out(self):
+        account = CompanyAccount('nazwa_firmy', '1343213465')
+
+        account.balance = 50.0
+
+        account.express_transfer_out(51)
+
+        assert account.history == [-50,-1]

@@ -1,4 +1,4 @@
-from src.personalaccount import PersonalAccount
+from src.personalaccount import PersonalAccount, Account
 from src.personalaccount import CompanyAccount
 
 class TestAccount:
@@ -158,3 +158,8 @@ class TestCompanyAccount:
         account.express_transfer_out(60)
 
         assert account.balance == 50.0
+
+    def test_check_balance(self):
+        account = Account(0.0)
+
+        assert account.balance == 0.0

@@ -167,7 +167,7 @@ class TestCompanyAccount:
         assert account.balance == 0.0
         assert account.history == []
 
-    def check_history_transfer_out(self):
+    def test_check_history_transfer_out(self):
         account = CompanyAccount('nazwa_firmy', '1343213465')
 
         account.balance = 50.0
@@ -176,11 +176,10 @@ class TestCompanyAccount:
 
         assert account.history == [-30]
 
-    def check_express_transfer_out(self):
+    def test_check_express_history_transfer_out(self):
         account = CompanyAccount('nazwa_firmy', '1343213465')
 
-        account.balance = 50.0
+        account.balance = 500.0
 
         account.express_transfer_out(51)
-
-        assert account.history == [-50,-1]
+        assert account.history == [-51,-5.0]

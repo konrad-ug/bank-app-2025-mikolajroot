@@ -22,8 +22,9 @@ class Account:
     def express_transfer_out(self,money):
         if 0 < money <= self.balance + self.fee_for_express_transfer:
             self.balance -= money + self.fee_for_express_transfer
-            self.history.append(-self.fee_for_express_transfer)
             self.history.append(-money)
+            self.history.append(-self.fee_for_express_transfer)
+
 
 
 #personal

@@ -60,6 +60,7 @@ class PersonalAccount(Account):
         else:
             return False
 
+
     def submit_for_loan(self,amount):
         if self.last_three_tranfer_in() or (len(self.history) >= 5 and sum(self.history[-5:]) > amount):
             self.balance += amount

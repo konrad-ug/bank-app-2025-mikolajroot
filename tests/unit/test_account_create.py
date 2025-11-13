@@ -1,5 +1,7 @@
 from threading import active_count
 
+import pytest
+
 from src.personalaccount import PersonalAccount, Account
 from src.personalaccount import CompanyAccount
 
@@ -184,8 +186,15 @@ class TestCompanyAccount:
         account.express_transfer_out(51)
         assert account.history == [-51,-5.0]
 
-    def test_submit_for_loan(self):
+    @pytest.fixture()
+    def account(self):
         account = PersonalAccount("Jane", "Doe", '62232465786')
+        return account
+
+
+
+    def test_submit_for_loan(self,account):
+
         account.balance = 50.0
 
         account.transfer_in(100)
@@ -199,8 +208,7 @@ class TestCompanyAccount:
         assert account.balance == 750
         assert account.submit_for_loan(200) == True
 
-    def test_submit_for_loan_too_little_transactions(self):
-        account = PersonalAccount("Jane", "Doe", '62232465786')
+    def test_submit_for_loan_too_little_transactions(self,account):
         account.balance = 50.0
 
         account.transfer_in(10)
@@ -210,8 +218,7 @@ class TestCompanyAccount:
 
         assert account.submit_for_loan(200) == False
 
-    def test_submit_for_loan_last_three_not_transfer_in(self):
-        account = PersonalAccount("Jane", "Doe", '62232465786')
+    def test_submit_for_loan_last_three_not_transfer_in(self,account):
         account.balance = 100
 
         account.transfer_in(10)
@@ -225,8 +232,7 @@ class TestCompanyAccount:
         assert account.balance == 1330
         assert account.submit_for_loan(100) == True
 
-    def test_last_three_transfer_out(self):
-        account = PersonalAccount("Jane", "Doe", '62232465786')
+    def test_last_three_transfer_out(self,account):
         account.balance = 100
 
         account.transfer_out(10)

@@ -52,6 +52,19 @@ class PersonalAccount(Account):
             if  25 > int(pesel[0:2]) or int(pesel[0:2]) > 60 :
                 return True
 
+    def last_three_tranfer_in(self):
+        for e in self.history[-3:]:
+            if e < 0:
+                return False
+        return True
+
+    def submit_for_loan(self,amount):
+        if len(self.history) >= 5 and self.last_three_tranfer_in() and sum(self.history[-5:]) > amount:
+            self.balance += amount
+            return True
+        else:
+            return False
+
 
 #company
 class CompanyAccount(Account):

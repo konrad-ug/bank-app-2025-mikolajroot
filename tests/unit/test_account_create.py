@@ -183,3 +183,46 @@ class TestCompanyAccount:
 
         account.express_transfer_out(51)
         assert account.history == [-51,-5.0]
+
+    def test_submit_for_loan(self):
+        account = PersonalAccount("Jane", "Doe", '62232465786')
+        account.balance = 50.0
+
+        account.transfer_in(100)
+        account.transfer_in(100)
+        account.transfer_in(100)
+        account.transfer_in(100)
+        account.transfer_in(100)
+
+        account.submit_for_loan(200)
+
+        assert account.balance == 750
+        assert account.submit_for_loan(200) == True
+
+    def test_submit_for_loan_too_little_transactions(self):
+        account = PersonalAccount("Jane", "Doe", '62232465786')
+        account.balance = 50.0
+
+        account.transfer_in(10)
+        account.transfer_in(10)
+        account.transfer_in(10)
+
+        account.submit_for_loan(200)
+
+        assert account.submit_for_loan(200) == False
+
+    def test_submit_for_loan_last_three_not_transfer_in(self):
+        account = PersonalAccount("Jane", "Doe", '62232465786')
+        account.balance = 50.0
+
+        account.transfer_in(10)
+        account.transfer_in(10)
+        account.transfer_in(10)
+        account.transfer_in(10)
+        account.transfer_in(-10)
+
+        account.submit_for_loan(200)
+
+        assert account.submit_for_loan(200) == False
+
+

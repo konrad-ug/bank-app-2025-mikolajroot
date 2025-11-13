@@ -53,13 +53,15 @@ class PersonalAccount(Account):
                 return True
 
     def last_three_tranfer_in(self):
-        for e in self.history[-3:]:
-            if e < 0:
-                return False
-        return True
+        if len(self.history) >= 3:
+            if all(i > 0 for i in self.history[-3:]):
+                return True
+            else: return False
+        else:
+            return False
 
     def submit_for_loan(self,amount):
-        if len(self.history) >= 5 and self.last_three_tranfer_in() and sum(self.history[-5:]) > amount:
+        if self.last_three_tranfer_in() or (len(self.history) >= 5 and sum(self.history[-5:]) > amount):
             self.balance += amount
             return True
         else:

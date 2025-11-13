@@ -205,24 +205,35 @@ class TestCompanyAccount:
 
         account.transfer_in(10)
         account.transfer_in(10)
-        account.transfer_in(10)
 
-        account.submit_for_loan(200)
+        account.submit_for_loan(10)
 
         assert account.submit_for_loan(200) == False
 
     def test_submit_for_loan_last_three_not_transfer_in(self):
         account = PersonalAccount("Jane", "Doe", '62232465786')
-        account.balance = 50.0
+        account.balance = 100
 
         account.transfer_in(10)
         account.transfer_in(10)
         account.transfer_in(10)
-        account.transfer_in(10)
-        account.transfer_in(-10)
+        account.transfer_in(1000)
+        account.transfer_out(-100)
 
         account.submit_for_loan(200)
 
-        assert account.submit_for_loan(200) == False
+        assert account.balance == 1330
+        assert account.submit_for_loan(100) == True
+
+    def test_last_three_transfer_out(self):
+        account = PersonalAccount("Jane", "Doe", '62232465786')
+        account.balance = 100
+
+        account.transfer_out(10)
+        account.transfer_in(20)
+        account.transfer_in(20)
+
+        assert account.last_three_tranfer_in() == False
+
 
 

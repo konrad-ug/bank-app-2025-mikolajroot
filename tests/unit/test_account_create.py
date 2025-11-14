@@ -191,46 +191,37 @@ class TestCompanyAccount:
         account = PersonalAccount("Jane", "Doe", '62232465786')
         return account
 
+    @pytest.mark.parametrize("initial_balance, transactions, loan_amount, expected_result, expected_balance", [
+
+        # test_submit_for_loan
+        (50.0, [('in', 100), ('in', 100), ('in', 100), ('in', 100), ('in', 100)], 200, True, 750.0),
+
+        # test_submit_for_loan_too_little_transactions
+        (50.0, [('in', 10), ('in', 10)], 200, False, 70.0),
+
+        # test_submit_for_loan_last_three_not_transfer_in
+        (100.0, [('in', 10), ('in', 10), ('in', 10), ('in', 1000), ('out', -100)], 200, True, 1330.0),
+
+        (100.0, [('in', 1000), ('in', 1000), ('in', 1000), ('in', 1000), ('out', 100)], 2000, True, 6000.0),
+
+        # test_submit_for_loan_two_conditions_not_met
+        (100.0, [('in', 10), ('in', 10), ('in', 10), ('in', 10), ('out', 10)], 50, False, 130.0)
+    ])
+    def test_submit_for_loan_parameterized(self,account, initial_balance, transactions, loan_amount, expected_result,
+                                           expected_balance):
+        account.balance = initial_balance
+
+        for type, amount in transactions:
+            if type == 'in':
+                account.transfer_in(amount)
+            elif type == 'out':
+                account.transfer_out(amount)
 
 
-    def test_submit_for_loan(self,account):
+        result = account.submit_for_loan(loan_amount)
 
-        account.balance = 50.0
-
-        account.transfer_in(100)
-        account.transfer_in(100)
-        account.transfer_in(100)
-        account.transfer_in(100)
-        account.transfer_in(100)
-
-        account.submit_for_loan(200)
-
-        assert account.balance == 750
-        assert account.submit_for_loan(200) == True
-
-    def test_submit_for_loan_too_little_transactions(self,account):
-        account.balance = 50.0
-
-        account.transfer_in(10)
-        account.transfer_in(10)
-
-        account.submit_for_loan(10)
-
-        assert account.submit_for_loan(200) == False
-
-    def test_submit_for_loan_last_three_not_transfer_in(self,account):
-        account.balance = 100
-
-        account.transfer_in(10)
-        account.transfer_in(10)
-        account.transfer_in(10)
-        account.transfer_in(1000)
-        account.transfer_out(-100)
-
-        account.submit_for_loan(200)
-
-        assert account.balance == 1330
-        assert account.submit_for_loan(100) == True
+        assert result == expected_result
+        assert account.balance == expected_balance
 
     def test_last_three_transfer_out(self,account):
         account.balance = 100

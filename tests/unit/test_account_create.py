@@ -1,3 +1,5 @@
+from pickle import FALSE
+from re import search
 from threading import active_count
 
 import pytest
@@ -270,17 +272,40 @@ class TestCompanyAccount:
     def test_creating_registry(self,registry):
         assert registry.accounts == []
 
-    @pytest.mark.parametrize("initial_accounts, expected_account", [
+    def test_adding_account(self,registry,personalAccount):
 
-        # test_adding_personal_account
-        ([], [personalAccount])
+        account = personalAccount
 
+        registry.add_account(account)
+
+        assert registry.accounts[0] == account
+
+    @pytest.mark.parametrize("pesel, should_find", [
+        # test_good_pesel
+        ("62232465786", True),
+
+        # test_bad_pesel_too_short
+        ("6223246578", False),
+
+        # test_good_pesel_but_different
+        ("00000000000", False),
+
+        # test_empty_string
+        ("", False)
     ])
-    def test_adding_account(self,registry,initial_accounts,personalAccount,expected_account):
+    def test_search_good_pesel(self,registry,personalAccount,pesel,should_find):
+        account = personalAccount
 
-        registry.accounts = initial_accounts
+        registry.add_account(account)
 
-        registry.add_account(personalAccount)
+        search_result = registry.search_account(pesel)
 
-        assert registry.accounts == expected_account
+        if should_find:
+            assert search_result == account
+        else:
+            assert search_result is False
+
+
+
+
 

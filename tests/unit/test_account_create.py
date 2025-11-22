@@ -1,9 +1,12 @@
+from pickle import FALSE
+from re import search
 from threading import active_count
 
 import pytest
 
-from src.personalaccount import PersonalAccount, Account
+from src.personalaccount import PersonalAccount, Account, AccountRegistry
 from src.personalaccount import CompanyAccount
+
 
 class TestAccount:
     def test_account_creation(self):
@@ -24,7 +27,6 @@ class TestAccount:
     def test_pesel_empty(self):
         account = PersonalAccount("Jane", "Doe", '')
         assert account.pesel == 'Invalid'
-
 
     def test_too_long_promoCode(self):
         account = PersonalAccount("Jane", "Doe", '', 'PROM_1234')
@@ -94,6 +96,7 @@ class TestCompanyAccount:
         account = CompanyAccount('nazwa_firmy', '1343213465')
         assert account.company_name == 'nazwa_firmy'
         assert account.nip == '1343213465'
+
     def test_nip_too_long(self):
         account = CompanyAccount('nazwa_firmy', '13432134654')
         assert account.nip == 'Invalid'
@@ -105,7 +108,6 @@ class TestCompanyAccount:
     def test_nip_empty(self):
         account = CompanyAccount('nazwa_firmy', '')
         assert account.nip == 'Invalid'
-
 
     def test_transfer_in(self):
         account = CompanyAccount('nazwa_firmy', '1343213465')
@@ -184,10 +186,10 @@ class TestCompanyAccount:
         account.balance = 500.0
 
         account.express_transfer_out(51)
-        assert account.history == [-51,-5.0]
+        assert account.history == [-51, -5.0]
 
     @pytest.fixture()
-    def account(self):
+    def personalAccount(self):
         account = PersonalAccount("Jane", "Doe", '62232465786')
         return account
 
@@ -207,30 +209,116 @@ class TestCompanyAccount:
         # test_submit_for_loan_two_conditions_not_met
         (100.0, [('in', 10), ('in', 10), ('in', 10), ('in', 10), ('out', 10)], 50, False, 130.0)
     ])
-    def test_submit_for_loan_parameterized(self,account, initial_balance, transactions, loan_amount, expected_result,
+    def test_submit_for_loan_parameterized(self, personalAccount, initial_balance, transactions, loan_amount,
+                                           expected_result,
                                            expected_balance):
-        account.balance = initial_balance
+        personalAccount.balance = initial_balance
 
         for type, amount in transactions:
             if type == 'in':
-                account.transfer_in(amount)
+                personalAccount.transfer_in(amount)
             elif type == 'out':
-                account.transfer_out(amount)
+                personalAccount.transfer_out(amount)
 
-
-        result = account.submit_for_loan(loan_amount)
+        result = personalAccount.submit_for_loan(loan_amount)
 
         assert result == expected_result
-        assert account.balance == expected_balance
+        assert personalAccount.balance == expected_balance
 
-    def test_last_three_transfer_out(self,account):
-        account.balance = 100
+    def test_last_three_transfer_out(self, personalAccount):
+        personalAccount.balance = 100
 
-        account.transfer_out(10)
-        account.transfer_in(20)
-        account.transfer_in(20)
+        personalAccount.transfer_out(10)
+        personalAccount.transfer_in(20)
+        personalAccount.transfer_in(20)
 
-        assert account.last_three_tranfer_in() == False
+        assert personalAccount.last_three_tranfer_in() == False
+
+    @pytest.fixture()
+    def companyAccount(self):
+        account = CompanyAccount('nazwa_firmy', '1343213465')
+        return account
+
+    @pytest.mark.parametrize("initial_balance, history, loan_amount, expected_result, expected_balance", [
+
+        # test_submit_for_loan
+        (2000, [-1775], 200, True, 2200),
+
+        # test_submit_for_loan_balance_too_small
+        (2000, [-1775], 2000, False, 2000),
+
+        # test_submit_for_loan_no_zus_transfer
+        (2000, [123,40], 200, False, 2000),
+
+    ])
+    def test_submit_for_loan_company_parameterized(self, companyAccount, initial_balance, history, loan_amount,
+                                                   expected_result,
+                                                   expected_balance):
+        companyAccount.balance = initial_balance
+
+        companyAccount.history = history
+
+        result = companyAccount.submit_for_loan(loan_amount)
+
+        assert result == expected_result
+        assert companyAccount.balance == expected_balance
+
+
+    @pytest.fixture()
+    def registry(self):
+        registry = AccountRegistry()
+        return registry
+
+    def test_creating_registry(self,registry):
+        assert registry.accounts == []
+
+    def test_adding_account(self,registry,personalAccount):
+
+        account = personalAccount
+
+        registry.add_account(account)
+
+        assert registry.accounts[0] == account
+
+    @pytest.mark.parametrize("pesel, should_find", [
+        # test_good_pesel
+        ("62232465786", True),
+
+        # test_bad_pesel_too_short
+        ("6223246578", False),
+
+        # test_good_pesel_but_different
+        ("00000000000", False),
+
+        # test_empty_string
+        ("", False)
+    ])
+    def test_search_good_pesel(self,registry,personalAccount,pesel,should_find):
+        account = personalAccount
+
+        registry.add_account(account)
+
+        search_result = registry.search_account(pesel)
+
+        if should_find:
+            assert search_result == account
+        else:
+            assert search_result is False
+
+    def test_return_accounts(self, registry, personalAccount):
+        registry.add_account(personalAccount)
+
+        result = registry.return_accounts()
+
+        assert result == registry.accounts
+
+    def test_return_number_of_accounts(self, registry, personalAccount):
+        registry.add_account(personalAccount)
+
+        result = registry.return_number_of_accounts()
+
+        assert result == len(registry.accounts)
+
 
 
 

@@ -82,3 +82,37 @@ class CompanyAccount(Account):
         if isinstance(pesel,str) and len(pesel) == 10:
             return True
 
+    def balance_two_times_amount(self,amount):
+        if self.balance > 2*amount:
+            return True
+        return False
+
+    def is_zus_payed(self):
+        if -1775 in self.history:
+            return True
+        return False
+
+    def submit_for_loan(self,amount):
+        if self.balance_two_times_amount(amount) and self.is_zus_payed():
+            self.balance += amount
+            return True
+        return False
+
+class AccountRegistry:
+    def __init__(self):
+        self.accounts = []
+
+    def add_account(self, account: PersonalAccount):
+        self.accounts.append(account)
+
+    def search_account(self,pesel):
+        for account in self.accounts:
+            if account.pesel == pesel:
+                return account
+        return False
+
+    def return_accounts(self):
+        return self.accounts
+
+    def return_number_of_accounts(self):
+        return len(self.accounts)

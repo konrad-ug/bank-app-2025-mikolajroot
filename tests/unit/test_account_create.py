@@ -305,6 +305,19 @@ class TestCompanyAccount:
         else:
             assert search_result is False
 
+    def test_return_accounts(self, registry, personalAccount):
+        registry.add_account(personalAccount)
+
+        result = registry.return_accounts()
+
+        assert result == registry.accounts
+
+    def test_return_number_of_accounts(self, registry, personalAccount):
+        registry.add_account(personalAccount)
+
+        result = registry.return_number_of_accounts()
+
+        assert result == len(registry.accounts)
 
 
 

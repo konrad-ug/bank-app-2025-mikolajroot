@@ -104,3 +104,15 @@ class AccountRegistry:
 
     def add_account(self, account: PersonalAccount):
         self.accounts.append(account)
+
+    def search_account(self,pesel):
+        for account in self.accounts:
+            if account.pesel == pesel:
+                return account
+        return False
+
+    def return_accounts(self):
+        return self.accounts
+
+    def return_number_of_accounts(self):
+        return len(self.accounts)

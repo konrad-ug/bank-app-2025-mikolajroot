@@ -1,6 +1,3 @@
-from pickle import FALSE
-from re import search
-from threading import active_count
 
 import pytest
 

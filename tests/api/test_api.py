@@ -25,6 +25,12 @@ class TestCrud:
         client.post("/api/accounts", json=sample_account_payload)
         return sample_account_payload
 
+    def test_create_account_with_existing_pesel(self,client,sample_account_payload):
+        client.post("/api/accounts", json=sample_account_payload)
+        response = client.post("/api/accounts", json=sample_account_payload)
+
+        assert response.status_code == 409
+
 
     @pytest.mark.parametrize("test_data", [
         {"name": "Jan", "surname": "Kowalski", "pesel": "12345678901"},
@@ -70,3 +76,90 @@ class TestCrud:
 
         get_response = client.get(f"/api/accounts/{pesel}")
         assert get_response.status_code == 404
+
+    def test_transfer_account_doesnt_exists(self,client,create_account):
+        non_existent_pesel = "00000000000"
+        request_body = {
+            "amount": 100,
+            "type": "incoming"
+        }
+        response = client.post(f"/api/accounts/{non_existent_pesel}/transfer", json=request_body)
+
+        assert  response.status_code == 404
+
+    def test_incoming_transfer(self,client,create_account):
+        pesel = create_account["pesel"]
+        request_body = {
+            "amount": 100,
+            "type": "incoming"
+        }
+
+        response = client.post(f"/api/accounts/{pesel}/transfer", json=request_body)
+
+        assert response.status_code == 200
+
+    def test_outgoing_success_transfer(self,client,create_account):
+        pesel = create_account["pesel"]
+        request_body1 = {
+            "amount": 2,
+            "type": "outgoing"
+        }
+        request_body2 = {
+            "amount": 100,
+            "type": "incoming"
+        }
+
+        client.post(f"/api/accounts/{pesel}/transfer", json=request_body2)
+
+        response = client.post(f"/api/accounts/{pesel}/transfer", json=request_body1)
+
+        assert response.status_code == 200
+
+    def test_outgoing_failure_transfer(self,client,create_account):
+        pesel = create_account["pesel"]
+        request_body = {
+            "amount": 1000,
+            "type": "outgoing"
+        }
+        response = client.post(f"/api/accounts/{pesel}/transfer", json=request_body)
+
+        assert response.status_code == 422
+
+    def test_express_failure_transfer(self, client, create_account):
+        pesel = create_account["pesel"]
+        request_body = {
+            "amount": 1000,
+            "type": "express"
+        }
+        response = client.post(f"/api/accounts/{pesel}/transfer", json=request_body)
+
+        assert response.status_code == 422
+
+    def test_express_success_transfer(self, client, create_account):
+        pesel = create_account["pesel"]
+        request_body1 = {
+            "amount": 2,
+            "type": "express"
+        }
+        request_body2 = {
+            "amount": 100,
+            "type": "incoming"
+        }
+
+        client.post(f"/api/accounts/{pesel}/transfer", json=request_body2)
+
+        response = client.post(f"/api/accounts/{pesel}/transfer", json=request_body1)
+
+        assert response.status_code == 200
+
+    def test_wrong_type(self,client,create_account):
+        pesel = create_account['pesel']
+
+        request_body = {
+            "amount": 100,
+            "type": "sghjbhjfgbsdahjbfgj"
+        }
+
+        response = client.post(f"/api/accounts/{pesel}/transfer", json=request_body)
+
+        assert response.status_code == 400

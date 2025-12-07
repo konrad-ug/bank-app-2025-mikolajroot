@@ -14,7 +14,7 @@ class Account:
             self.balance += money
             self.history.append(money)
 
-    def transfer_out(self,money: float) -> None:
+    def transfer_out(self,money: float):
         if 0 < money <= self.balance:
             self.balance -= money
             self.history.append(-money)

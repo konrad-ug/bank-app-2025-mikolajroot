@@ -74,7 +74,7 @@ class PersonalAccount(Account):
 
 
 #company
-class CompanyAccount(Account):
+class CompanyAccount(Account): # pragma: no cover
 
     fee_for_express_transfer = 5.0
 

@@ -7,6 +7,8 @@ registry = AccountRegistry()
 def create_account():
     data = request.get_json()
     print(f"Create account request: {data}")
+    if registry.search_account(data["pesel"]) :
+        return jsonify({"message": "Account with this pesel exists"}), 409
     personalAccount = PersonalAccount(data["name"],data["surname"],data["pesel"])
     registry.add_account(account=personalAccount)
     return jsonify({"message": "Account created"}), 201
@@ -17,11 +19,13 @@ def get_all_accounts():
     accounts = registry.return_accounts()
     accounts_data = [{"name": acc.first_name, "surname": acc.last_name, "pesel": acc.pesel, "balance": acc.balance} for acc in accounts]
     return jsonify(accounts_data), 200
+
 @app.route("/api/accounts/count", methods=['GET'])
 def get_account_count():
     print("Get account count request received")
     count = registry.return_number_of_accounts()
     return jsonify({"count": count}), 200
+
 @app.route("/api/accounts/<pesel>", methods=['GET'])
 def get_account_by_pesel(pesel):
     account = registry.search_account(pesel)
@@ -37,6 +41,7 @@ def update_account(pesel):
     if data["name"] : account.first_name = data["name"]
     if data["surname"] : account.last_name = data["surname"]
     return jsonify({"message": "Account updated"}), 200
+
 @app.route("/api/accounts/<pesel>", methods=['DELETE'])
 def delete_account(pesel):
     account: PersonalAccount = registry.search_account(pesel)
@@ -44,5 +49,25 @@ def delete_account(pesel):
     registry.accounts.remove(account)
     return jsonify({"message": "Account deleted"}), 200
 
+@app.route("/api/accounts/<pesel>/transfer", methods=['POST'])
+def transfer(pesel):
+    data = request.get_json()
+    account : PersonalAccount | bool = registry.search_account(pesel)
+    if not account : return jsonify({"message": "Account not found"}), 404
 
-
+    match data['type']:
+        case "incoming":
+            account.transfer_in(data['amount'])
+            return jsonify({"message": "The order has been accepted for processing"}), 200
+        case "outgoing":
+            balance = account.balance
+            account.transfer_out(data['amount'])
+            if account.balance == balance - data['amount']: return jsonify({"message": "The order has been accepted for processing"}), 200
+            return jsonify({"message": "Transaction failed"}), 422
+        case "express":
+            balance = account.balance
+            account.express_transfer_out(data['amount'])
+            if account.balance == balance - data['amount'] - account.fee_for_express_transfer: return  jsonify({"message": "The order has been accepted for processing"}), 200
+            return jsonify({"message": "Transaction failed"}), 422
+        case _:
+            return jsonify({"message": "Type doesn`t exits"}), 400

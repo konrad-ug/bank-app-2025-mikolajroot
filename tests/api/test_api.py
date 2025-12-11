@@ -1,10 +1,12 @@
 import pytest
 from app.api import app as flask_app, registry
-import json
+
 
 class TestCrud:
+
+
     @pytest.fixture()
-    def client(self):
+    def client(self, client):
         flask_app.config['TESTING'] = True
 
         registry.accounts = []
@@ -21,16 +23,15 @@ class TestCrud:
         }
 
     @pytest.fixture
-    def create_account(self,client, sample_account_payload):
+    def create_account(self, client, sample_account_payload):
         client.post("/api/accounts", json=sample_account_payload)
         return sample_account_payload
-
 
     @pytest.mark.parametrize("test_data", [
         {"name": "Jan", "surname": "Kowalski", "pesel": "12345678901"},
         {"name": "Anna", "surname": "Ziemniak", "pesel": "98765432109"}
     ])
-    def test_get_account_by_pesel(self,client, test_data):
+    def test_get_account_by_pesel(self, client, test_data):
         client.post("/api/accounts", json=test_data)
 
         response = client.get(f"/api/accounts/{test_data['pesel']}")
@@ -40,13 +41,13 @@ class TestCrud:
         assert data["name"] == test_data["name"]
         assert data["pesel"] == test_data["pesel"]
 
-    def test_get_account_not_found(self,client):
+    def test_get_account_not_found(self, client):
         non_existent_pesel = "00000000000"
         response = client.get(f"/api/accounts/{non_existent_pesel}")
 
         assert response.status_code == 404
 
-    def test_update_account(self,client, create_account):
+    def test_update_account(self, client, create_account):
         pesel = create_account["pesel"]
         update_data = {
             "name": "Adam Updated",
@@ -61,7 +62,7 @@ class TestCrud:
         assert updated_account["name"] == "Adam Updated"
         assert updated_account["surname"] == "Nowak Updated"
 
-    def test_delete_account(self,client, create_account):
+    def test_delete_account(self, client, create_account):
         pesel = create_account["pesel"]
 
         response = client.delete(f"/api/accounts/{pesel}")

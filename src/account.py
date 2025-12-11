@@ -1,4 +1,7 @@
-from datetime import datetime
+import os
+
+import requests
+from datetime import date
 
 
 class Account:
@@ -32,7 +35,8 @@ class PersonalAccount(Account):
 
     fee_for_express_transfer = 1.0
 
-    def __init__(self, first_name, last_name,pesel,promoCode=None):
+    def __init__(self, first_name, last_name, pesel, promoCode=None):
+        super().__init__()
         self.first_name = first_name
         self.last_name = last_name
         self.pesel = pesel if self.is_pesel_valid(pesel) else 'Invalid'
@@ -74,13 +78,22 @@ class CompanyAccount(Account):
 
     fee_for_express_transfer = 5.0
 
-    def __init__(self, company_name,nip):
+    def __init__(self, company_name, nip):
+        super().__init__()
         self.company_name = company_name
         self.nip = nip if self.is_nip_valid(nip) else 'Invalid'
         self.history = []
-    def is_nip_valid(self,pesel):
-        if isinstance(pesel,str) and len(pesel) == 10:
+
+        if self.is_nip_valid(nip):
+            self.nip = nip
+            if not self.check_vat_status(nip):
+                raise ValueError("Company not registered!!")
+        else:
+            self.nip = "Invalid"
+    def is_nip_valid(self,nip):
+        if isinstance(nip,str) and len(nip) == 10:
             return True
+        return False
 
     def balance_two_times_amount(self,amount):
         if self.balance > 2*amount:
@@ -96,6 +109,23 @@ class CompanyAccount(Account):
         if self.balance_two_times_amount(amount) and self.is_zus_payed():
             self.balance += amount
             return True
+        return False
+
+    def check_vat_status(self,nip):
+        today = date.today()
+        formatted_date = today.strftime("%Y-%m-%d")
+
+        os.environ["BANK_APP_MF_URL"] = f"https://wl-api.mf.gov.pl/api/search/nip/{nip}?date={formatted_date}"
+
+        response = requests.get(os.environ['BANK_APP_MF_URL'])
+
+        data = response.json()
+
+        if data['result']['subject']['statusVat'] == "Czynny":
+            print("Vat jest czynny")
+            return True
+
+
         return False
 
 class AccountRegistry:

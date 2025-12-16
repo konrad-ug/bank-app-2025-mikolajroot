@@ -1,6 +1,6 @@
 from flask import Flask, request, jsonify
-from src.personalaccount import AccountRegistry
-from src.personalaccount import PersonalAccount
+from src.account import AccountRegistry
+from src.account import PersonalAccount
 app = Flask(__name__)
 registry = AccountRegistry()
 @app.route("/api/accounts", methods=['POST'])
@@ -71,6 +71,3 @@ def transfer(pesel):
             return jsonify({"message": "Transaction failed"}), 422
         case _:
             return jsonify({"message": "Type doesn`t exits"}), 400
-
-
-

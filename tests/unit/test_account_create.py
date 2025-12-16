@@ -1,8 +1,11 @@
+from re import match
+from symtable import Class
 
 import pytest
 
-from src.personalaccount import PersonalAccount, Account, AccountRegistry
-from src.personalaccount import CompanyAccount
+from src.account import PersonalAccount, Account, AccountRegistry
+from src.account import CompanyAccount
+
 
 
 class TestAccount:
@@ -89,6 +92,8 @@ class TestAccount:
 
 
 class TestCompanyAccount:
+
+
     def test_account_creation(self):
         account = CompanyAccount('nazwa_firmy', '1343213465')
         assert account.company_name == 'nazwa_firmy'
@@ -259,6 +264,42 @@ class TestCompanyAccount:
 
         assert result == expected_result
         assert companyAccount.balance == expected_balance
+
+    @pytest.fixture(autouse=True)
+    def mock_api_calls(self, mocker):
+        mock_response = mocker.Mock()
+        mock_response.json.return_value = {
+            "result": {
+                "subject": {
+                    "statusVat": "Czynny"
+                }
+            }
+        }
+        mock_response.status_code = 200
+
+        return mocker.patch("src.account.requests.get", return_value=mock_response)
+
+    def test_constructor_raises_error_if_company_not_registered(self, mock_api_calls):
+        mock_api_calls.return_value.json.return_value = {
+            "result": {
+                "subject": {
+                    "statusVat": "Nieczynny"
+                }
+            }
+        }
+        with pytest.raises(ValueError, match="Company not registered!!"):
+            CompanyAccount('kjandfna', '1234567890')
+
+    def test_company_has_vat(self,mock_api_calls):
+
+        valid_nip = "1234567890"
+
+        account = CompanyAccount("Firma Sp. z o.o.", valid_nip)
+
+        assert account.nip == valid_nip
+        assert account.company_name == "Firma Sp. z o.o."
+
+        mock_api_calls.assert_called_once()
 
 
     @pytest.fixture()

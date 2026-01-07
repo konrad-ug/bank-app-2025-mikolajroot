@@ -5,7 +5,7 @@ name: Test api
 
 on:
   push:
-    branches: [ "lab11" ]
+    branches: [ "main" ]
   pull_request:
     branches: [ "main" ]
 

@@ -30,7 +30,7 @@ def get_account_count():
 def get_account_by_pesel(pesel):
     account = registry.search_account(pesel)
     if account:
-        return jsonify({"name": account.first_name, "surname": account.last_name,"pesel": account.pesel}), 200
+        return jsonify({"name": account.first_name, "surname": account.last_name,"pesel": account.pesel,"balance":account.balance}), 200
     return jsonify({"message": "Account not found"}), 404
 
 @app.route("/api/accounts/<pesel>", methods=['PATCH'])

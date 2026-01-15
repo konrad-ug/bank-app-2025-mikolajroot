@@ -31,12 +31,13 @@ class Account:
     def send_history_via_email(self,email_Address):
         dateNow = datetime.now()
         subject = f"Account Transfer History {dateNow.strftime('%Y-%m-%d')}"
+        text = ""
         if self.__class__.__name__ == "PersonalAccount":
             text = f'Personal account history: {self.history}'
         elif self.__class__.__name__ == "CompanyAccount":
             text = f'Company account history: {self.history}'
 
-        client = SMTPClient()
+        client = SMTPClient() 
 
         result = client.send(subject,text,email_Address)
         return result

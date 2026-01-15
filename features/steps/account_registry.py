@@ -56,3 +56,28 @@ def field_equals_to(context, pesel, field, value):
     assert response.status_code == 200
     account = response.json()
     assert account[field] == value
+
+@when('I make "{transfer_type}" transfer of "{amount}" to account with pesel: "{pesel}"')
+@step('I make "{transfer_type}" transfer of "{amount}" to account with pesel: "{pesel}"')
+def make_transfer(context, transfer_type, amount, pesel):
+    json_body = {
+        "type": transfer_type,
+        "amount": float(amount)
+    }
+    response = requests.post(URL + f"/api/accounts/{pesel}/transfer", json=json_body)
+    context.transfer_response = response
+
+@then('Transfer is accepted')
+def transfer_accepted(context):
+    assert context.transfer_response.status_code == 200
+
+@then('Transfer is rejected')
+def transfer_rejected(context):
+    assert context.transfer_response.status_code == 422
+
+@then('Account with pesel "{pesel}" has balance of "{balance}"')
+def check_balance(context, pesel, balance):
+    response = requests.get(URL + f"/api/accounts/{pesel}")
+    assert response.status_code == 200
+    account = response.json()
+    assert account["balance"] == float(balance)

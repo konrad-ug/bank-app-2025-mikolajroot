@@ -1,6 +1,7 @@
 from flask import Flask, request, jsonify
 from src.account import AccountRegistry
 from src.account import PersonalAccount
+from src.account import MongoAccountsRepository
 app = Flask(__name__)
 registry = AccountRegistry()
 @app.route("/api/accounts", methods=['POST'])
@@ -36,7 +37,7 @@ def get_account_by_pesel(pesel):
 @app.route("/api/accounts/<pesel>", methods=['PATCH'])
 def update_account(pesel):
     data = request.get_json()
-    account : PersonalAccount = registry.search_account(pesel)
+    account : PersonalAccount | bool = registry.search_account(pesel)
     if not account : return jsonify({"message": "Account not found"}), 404
     if data["name"] : account.first_name = data["name"]
     if data["surname"] : account.last_name = data["surname"]
@@ -71,3 +72,13 @@ def transfer(pesel):
             return jsonify({"message": "Transaction failed"}), 422
         case _:
             return jsonify({"message": "Type doesn`t exits"}), 400
+
+@app.route("/api/accounts/save", methods=['POST'])
+def save_accounts():
+    try:
+        repo = MongoAccountsRepository()
+        saved_count = repo.save_all(registry)
+        repo.close()
+        return jsonify({"message": f"Saved {saved_count} accounts to database"}), 200
+    except Exception as e:
+        return jsonify({"message": f"Error saving accounts: {str(e)}"}), 500

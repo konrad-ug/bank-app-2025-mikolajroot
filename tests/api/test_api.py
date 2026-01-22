@@ -163,3 +163,39 @@ class TestCrud:
         response = client.post(f"/api/accounts/{pesel}/transfer", json=request_body)
 
         assert response.status_code == 400
+
+    def test_save_accounts_success(self, client, create_account, monkeypatch):
+        class DummyRepo:
+            def __init__(self):
+                pass
+
+            def save_all(self, reg):
+                return len(reg.return_accounts())
+
+            def close(self):
+                pass
+
+        monkeypatch.setattr("app.api.MongoAccountsRepository", DummyRepo)
+
+        response = client.post("/api/accounts/save")
+
+        assert response.status_code == 200
+        assert response.get_json()["message"] == "Saved 1 accounts to database"
+
+    def test_save_accounts_failure(self, client, monkeypatch):
+        class FailingRepo:
+            def __init__(self, *args, **kwargs):
+                pass
+
+            def save_all(self, reg):
+                raise RuntimeError("db down")
+
+            def close(self):
+                pass
+
+        monkeypatch.setattr("app.api.MongoAccountsRepository", FailingRepo)
+
+        response = client.post("/api/accounts/save")
+
+        assert response.status_code == 500
+        assert "Error saving accounts" in response.get_json()["message"]

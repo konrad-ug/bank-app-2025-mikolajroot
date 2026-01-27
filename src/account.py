@@ -191,5 +191,26 @@ class MongoAccountsRepository:
         
         return len(accounts_data)
 
+    def load_all(self, registry: AccountRegistry):
+        registry.accounts.clear()
+        
+        accounts_refs = self.collection.find({})
+        
+        loaded_count = 0
+        for acc_ref in accounts_refs:
+            account = PersonalAccount(
+                acc_ref["first_name"],
+                acc_ref["last_name"],
+                acc_ref["pesel"]
+            )
+
+            account.balance = acc_ref["balance"]
+            account.history = acc_ref["history"]
+            
+            registry.add_account(account)
+            loaded_count += 1
+        
+        return loaded_count
+
     def close(self):
         self.client.close()

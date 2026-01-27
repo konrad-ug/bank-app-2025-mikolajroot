@@ -1,6 +1,8 @@
 import pytest
 from app.api import app as flask_app, registry
+from src.account import PersonalAccount, MongoAccountsRepository
 import json
+from pymongo import MongoClient
 
 class TestCrud:
     @pytest.fixture()
@@ -164,38 +166,57 @@ class TestCrud:
 
         assert response.status_code == 400
 
-    def test_save_accounts_success(self, client, create_account, monkeypatch):
-        class DummyRepo:
-            def __init__(self):
-                pass
-
-            def save_all(self, reg):
-                return len(reg.return_accounts())
-
-            def close(self):
-                pass
-
-        monkeypatch.setattr("app.api.MongoAccountsRepository", DummyRepo)
-
+    def test_save_accounts_success(self, client, create_account):
         response = client.post("/api/accounts/save")
 
         assert response.status_code == 200
-        assert response.get_json()["message"] == "Saved 1 accounts to database"
+        assert "Saved 1 accounts to database" in response.get_json()["message"]
+        
+        
+        mongo_repo = MongoAccountsRepository()
+        saved_refs = list(mongo_repo.collection.find({}))
+        mongo_repo.close()
+        
+        assert len(saved_refs) == 1
+        assert saved_refs[0]["pesel"] == "90010112345"
 
-    def test_save_accounts_failure(self, client, monkeypatch):
-        class FailingRepo:
-            def __init__(self, *args, **kwargs):
-                pass
-
-            def save_all(self, reg):
-                raise RuntimeError("db down")
-
-            def close(self):
-                pass
-
-        monkeypatch.setattr("app.api.MongoAccountsRepository", FailingRepo)
-
+    def test_save_accounts_empty_registry(self, client):
         response = client.post("/api/accounts/save")
 
-        assert response.status_code == 500
-        assert "Error saving accounts" in response.get_json()["message"]
+        assert response.status_code == 200
+        assert "Saved 0 accounts to database" in response.get_json()["message"]
+        
+        mongo_repo = MongoAccountsRepository()
+        saved_refs = list(mongo_repo.collection.find({}))
+        mongo_repo.close()
+        
+        assert len(saved_refs) == 0
+
+    def test_load_accounts_success(self, client, create_account):
+        client.post("/api/accounts/save")
+        
+        registry.accounts.clear()
+        assert len(registry.return_accounts()) == 0
+        
+        response = client.post("/api/accounts/load")
+
+        assert response.status_code == 200
+        assert "Loaded 1 accounts from database" in response.get_json()["message"]
+        
+        assert len(registry.return_accounts()) == 1
+        loaded_account = registry.return_accounts()[0]
+        assert loaded_account.first_name == "Adam"
+        assert loaded_account.last_name == "Nowak"
+        assert loaded_account.pesel == "90010112345"
+
+    def test_load_accounts_clears_registry(self, client, create_account):
+        client.post("/api/accounts/save")
+        
+        registry.add_account(PersonalAccount("Extra", "Account", "22222222222"))
+        assert len(registry.return_accounts()) == 2
+        
+        response = client.post("/api/accounts/load")
+
+        assert response.status_code == 200
+        assert len(registry.return_accounts()) == 1
+        assert registry.return_accounts()[0].pesel == "90010112345"

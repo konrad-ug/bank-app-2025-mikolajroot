@@ -82,3 +82,13 @@ def save_accounts():
         return jsonify({"message": f"Saved {saved_count} accounts to database"}), 200
     except Exception as e:
         return jsonify({"message": f"Error saving accounts: {str(e)}"}), 500
+
+@app.route("/api/accounts/load", methods=['POST'])
+def load_accounts():
+    try:
+        repo = MongoAccountsRepository()
+        loaded_count = repo.load_all(registry)
+        repo.close()
+        return jsonify({"message": f"Loaded {loaded_count} accounts from database"}), 200
+    except Exception as e:
+        return jsonify({"message": f"Error loading accounts: {str(e)}"}), 500

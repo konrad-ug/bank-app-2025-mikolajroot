@@ -40,6 +40,9 @@ jobs:
         export FLASK_ENV=development
         export PYTHONPATH=$GITHUB_WORKSPACE
         flask run &
+    - name: start mongo
+      run: |
+        docker compose -f mongo.yml up -d
     - name: Execute API tests
       run: |
         python3 -m pytest tests/api

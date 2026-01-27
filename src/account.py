@@ -3,6 +3,7 @@ import os
 import requests
 from datetime import date, datetime
 from lib.smtp import SMTPClient
+from pymongo import MongoClient
 
 class Account:
 
@@ -163,3 +164,53 @@ class AccountRegistry:
     def return_number_of_accounts(self):
         return len(self.accounts)
 
+class MongoAccountsRepository:
+    def __init__(self, connection_string="mongodb://localhost:27017/", database_name="bank_app"):
+
+        self.client = MongoClient(connection_string)
+        self.db = self.client[database_name]
+        self.collection = self.db["accounts"]
+
+    def save_all(self, registry: AccountRegistry):
+        self.collection.delete_many({})
+        
+        accounts_data = []
+        for account in registry.return_accounts():
+            if isinstance(account, PersonalAccount):
+                account_dict = {
+                    "first_name": account.first_name,
+                    "last_name": account.last_name,
+                    "pesel": account.pesel,
+                    "balance": account.balance,
+                    "history": account.history
+                }
+                accounts_data.append(account_dict)
+        
+        if accounts_data:
+            self.collection.insert_many(accounts_data)
+        
+        return len(accounts_data)
+
+    def load_all(self, registry: AccountRegistry):
+        registry.accounts.clear()
+        
+        accounts_refs = self.collection.find({})
+        
+        loaded_count = 0
+        for acc_ref in accounts_refs:
+            account = PersonalAccount(
+                acc_ref["first_name"],
+                acc_ref["last_name"],
+                acc_ref["pesel"]
+            )
+
+            account.balance = acc_ref["balance"]
+            account.history = acc_ref["history"]
+            
+            registry.add_account(account)
+            loaded_count += 1
+        
+        return loaded_count
+
+    def close(self):
+        self.client.close()

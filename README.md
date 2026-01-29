@@ -8,7 +8,4 @@ surname:  Miszka
 
 group: 1
 
-## How to start the app
-
-
-## How to execute tests
+index: 302417

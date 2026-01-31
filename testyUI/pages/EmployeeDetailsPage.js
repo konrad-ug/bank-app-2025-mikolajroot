@@ -8,8 +8,13 @@ class EmployeeDetailsPage {
   }
 
   async isRoomNumberVisible(roomNumber) {
-    const roomElement = this.page.getByText(`Nr pokoju: ${roomNumber}`);
+    const roomElement = this.page.getByText(new RegExp(`\\*?Nr pokoju:\\s*${roomNumber}`));
     return await roomElement.isVisible();
+  }
+
+  async isWorkingAtInstitute(instituteName) {
+    const instituteElement = this.page.getByText(instituteName);
+    return await instituteElement.isVisible();
   }
 }
 

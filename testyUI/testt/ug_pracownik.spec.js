@@ -20,3 +20,21 @@ test('sprawdzenie pokoju pracownika UG - Konrad Sołtys', async ({ page }) => {
   
   await expect(await employeeDetailsPage.isRoomNumberVisible('4.19')).toBeTruthy();
 });
+
+test('sprawdzenie pracownika Instytut Fizyki Doświadczalnej - mgr Anna Baran', async ({ page }) => {
+  const homePage = new HomePage(page);
+  const employeesPage = new EmployeesPage(page);
+  const employeeDetailsPage = new EmployeeDetailsPage(page);
+
+  await homePage.goto();
+  await homePage.goToPracownicy();
+  
+  await employeesPage.goToSkladOsobowy();
+  await employeesPage.searchEmployee('baran');
+  
+  await expect(await employeesPage.isEmployeeVisible('mgr Anna Baran')).toBeTruthy();
+  
+  await employeesPage.clickEmployeeLink('mgr Anna Baran');
+  
+  await expect(await employeeDetailsPage.isWorkingAtInstitute('Instytut Fizyki Doświadczalnej')).toBeTruthy();
+});

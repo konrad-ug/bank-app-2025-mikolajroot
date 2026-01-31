@@ -1,19 +1,22 @@
 const { test, expect } = require('@playwright/test');
+const { HomePage } = require('../pages/HomePage');
+const { EmployeesPage } = require('../pages/EmployeesPage');
+const { EmployeeDetailsPage } = require('../pages/EmployeeDetailsPage');
 
 test('sprawdzenie pokoju pracownika UG - Konrad Sołtys', async ({ page }) => {
+  const homePage = new HomePage(page);
+  const employeesPage = new EmployeesPage(page);
+  const employeeDetailsPage = new EmployeeDetailsPage(page);
 
-  await page.goto('https://mfi.ug.edu.pl/');
+  await homePage.goto();
+  await homePage.goToPracownicy();
   
-  await page.getByRole('banner').getByRole('link', { name: 'Pracownicy' }).click();
+  await employeesPage.goToSkladOsobowy();
+  await employeesPage.searchEmployee('sołtys');
   
-  await page.getByRole('main').getByRole('link', { name: 'skład osobowy' }).click();
+  await expect(await employeesPage.isEmployeeVisible('mgr Konrad Sołtys')).toBeTruthy();
   
-  await page.getByRole('textbox', { name: 'Imię lub nazwisko' }).fill('sołtys');
+  await employeesPage.clickEmployeeLink('mgr Konrad Sołtys');
   
-  const konradLink = page.getByRole('link', { name: /mgr Konrad Sołtys/i });
-  await expect(konradLink).toBeVisible();
-  
-  await konradLink.click();
-  
-  await expect(page.getByText('Nr pokoju: 4.19')).toBeVisible();
+  await expect(await employeeDetailsPage.isRoomNumberVisible('4.19')).toBeTruthy();
 });
